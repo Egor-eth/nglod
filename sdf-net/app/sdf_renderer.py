@@ -42,6 +42,7 @@ from lib.models import *
 from lib.tracer import *
 from lib.options import parse_options
 from lib.geoutils import sample_unif_sphere, sample_fib_sphere, normalized_slice
+import json
 
 
 def write_exr(path, data):
@@ -79,6 +80,8 @@ if __name__ == '__main__':
                            help='Rotation in degrees.')
     app_group.add_argument('--depth', type=float, default=0.0,
                            help='Depth of 2D slice.')
+    app_group.add_argument('--from-file', type=str, default=None,
+                           help='Camera settings file.')
     args = parser.parse_args()
 
     # Pick device
@@ -133,7 +136,40 @@ if __name__ == '__main__':
     else:
         model_matrix = torch.eye(3)
 
-    if args.r360:
+    if args.from_file is not None:
+
+        with open(args.from_file) as f:
+            camera_file = json.load(f)
+            
+        fov = camera_file.yfov
+
+        matrix = np.array(map(float, camera_file.matrix))
+
+        rot_matrix = np.inv(matrix[:3, :3])
+        pos = matrix[:3, 4]
+        lookat = rot_matrix * np.array([0.0, 1.0, 0.0])
+
+
+        views = sample_fib_sphere(args.nb_poses)
+        cam_origins = args.cam_radius * views
+        
+        out = renderer.shade_images(net=net,
+                                    f=pos,
+                                    t=args.camera_lookat,
+                                    fov=args.camera_fov,
+                                    aa=not args.disable_aa,
+                                    mm=model_matrix)
+
+        data = out.float().numpy().exrdict()
+
+        if args.exr:
+            write_exr('{}/exr/{:06d}.exr'.format(ins_dir, p), data)
+
+        img_out = out.image().byte().numpy()
+        Image.fromarray(img_out.rgb).save('{}/rgb/{:06d}.png'.format(ins_dir, p), mode='RGB')
+        Image.fromarray(img_out.normal).save('{}/normal/{:06d}.png'.format(ins_dir, p), mode='RGB')
+
+    elif args.r360:
         for angle in np.arange(0, 360, 2):
             rad = np.radians(angle)
             model_matrix = torch.FloatTensor(R.from_rotvec(rad * np.array([0, 1, 0])).as_matrix())
