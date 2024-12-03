@@ -2,7 +2,6 @@ torch>=1.6.0
 torchvision>=0.7.0
 tensorboard
 matplotlib
-tinyobjloader
 pybind11
 trimesh>=3.0
 tqdm
@@ -14,3 +13,6 @@ moviepy
 opencv-python
 plyfile
 polyscope
+tinyobjloader
+pyexr
+
