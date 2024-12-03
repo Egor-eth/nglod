@@ -3,4 +3,5 @@
 .ipynb_checkpoints
 compile_commands.json
 .vscode
+
 sdf-net/data

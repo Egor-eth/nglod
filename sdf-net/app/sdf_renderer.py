@@ -139,14 +139,15 @@ if __name__ == '__main__':
     if args.from_file is not None:
 
         with open(args.from_file) as f:
-            camera_file = json.load(f)
+            camera_file = json.load(f)["camera"]
             
-        fov = camera_file.yfov
+        fov = camera_file["yfov"]
 
-        matrix = np.array(map(float, camera_file.matrix))
 
-        rot_matrix = np.inv(matrix[:3, :3])
-        pos = matrix[:3, 4]
+        matrix = np.array(list(map(float, camera_file["matrix"]))).reshape(4, 4)
+
+        rot_matrix = np.linalg.inv(matrix[:3, :3])
+        pos = matrix[:3, 3]
         lookat = rot_matrix * np.array([0.0, 1.0, 0.0])
 
 
@@ -166,8 +167,8 @@ if __name__ == '__main__':
             write_exr('{}/exr/{:06d}.exr'.format(ins_dir, p), data)
 
         img_out = out.image().byte().numpy()
-        Image.fromarray(img_out.rgb).save('{}/rgb/{:06d}.png'.format(ins_dir, p), mode='RGB')
-        Image.fromarray(img_out.normal).save('{}/normal/{:06d}.png'.format(ins_dir, p), mode='RGB')
+        Image.fromarray(img_out.rgb).save('{}/rgb/{:06d}.png'.format(ins_dir, 0), mode='RGB')
+        Image.fromarray(img_out.normal).save('{}/normal/{:06d}.png'.format(ins_dir, 0), mode='RGB')
 
     elif args.r360:
         for angle in np.arange(0, 360, 2):
