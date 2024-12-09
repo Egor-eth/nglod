@@ -177,19 +177,29 @@ def unnormalized_grid(width, height, device='cuda'):
     return uv
 
 
-def look_at(f, t, width, height, mode='ortho', fov=90.0, device='cuda'):
+def look_at(f, t, width, height, mode='ortho', fov=90.0, device='cuda', u=None):
     """Vectorized look-at function, returns an array of ray origins and directions
     URL: https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/lookat-function
     """
 
     camera_origin = torch.FloatTensor(f).to(device)
     camera_view = F.normalize(torch.FloatTensor(t).to(device) - camera_origin, dim=0)
-    camera_right = F.normalize(torch.cross(camera_view, torch.FloatTensor([0,1,0]).to(device)), dim=0)
-    camera_up = F.normalize(torch.cross(camera_right, camera_view), dim=0)
+
+    if u is None:
+        camera_right = F.normalize(torch.cross(camera_view, torch.FloatTensor([0,1,0]).to(device)), dim=0)
+        camera_up = F.normalize(torch.cross(camera_right, camera_view), dim=0)
+    else:
+        camera_up = F.normalize(torch.FloatTensor(u).to(device), dim=0)
+        camera_right = F.normalize(torch.cross(camera_view, camera_up), dim=0)
 
     coord = normalized_grid(width, height, device=device)
-    ray_origin = camera_right * coord[...,0,np.newaxis] * np.tan(np.radians(fov/2)) + \
-                 camera_up * coord[...,1,np.newaxis] * np.tan(np.radians(fov/2)) + \
+    if isinstance(fov, (int, float)):
+        xfov=yfov=fov
+    else:
+        xfov, yfov = fov
+
+    ray_origin = camera_right * coord[...,0,np.newaxis] * np.tan(np.radians(xfov/2)) + \
+                 camera_up * coord[...,1,np.newaxis] * np.tan(np.radians(yfov/2)) + \
                  camera_origin + camera_view
     ray_origin = ray_origin.reshape(-1, 3)
     ray_offset = camera_view.unsqueeze(0).repeat(ray_origin.shape[0], 1)

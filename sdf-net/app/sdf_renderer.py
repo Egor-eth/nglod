@@ -133,6 +133,8 @@ if __name__ == '__main__':
     if args.rotate is not None:
         rad = np.radians(args.rotate)
         model_matrix = torch.FloatTensor(R.from_rotvec(rad * np.array([0, 1, 0])).as_matrix())
+
+        
     else:
         model_matrix = torch.eye(3)
 
@@ -141,25 +143,53 @@ if __name__ == '__main__':
         with open(args.from_file) as f:
             camera_file = json.load(f)["camera"]
             
-        fov = camera_file["yfov"]
 
 
-        matrix = np.array(list(map(float, camera_file["matrix"]))).reshape(4, 4)
-
-        rot_matrix = np.linalg.inv(matrix[:3, :3])
-        pos = matrix[:3, 3]
-        lookat = rot_matrix * np.array([0.0, 1.0, 0.0])
-
-
-        views = sample_fib_sphere(args.nb_poses)
-        cam_origins = args.cam_radius * views
+        matrix = torch.tensor(list(map(float, camera_file["matrix"]))).reshape(4, 4)
         
+        aspect_ratio = args.render_res[0] / args.render_res[1]
+        print(aspect_ratio)
+        #matrix[:3, 0] /= torch.norm(matrix[:3, 0])
+        #matrix[:3, 1] /= torch.norm(matrix[:3, 1])
+        #matrix[:3, 2] /= torch.norm(matrix[:3, 2])
+
+        m_inv = torch.linalg.inv(matrix)
+
+        print(matrix)
+        print(m_inv)
+
+        rot_matrix = m_inv[:3, :3]
+        pos = m_inv[3, :3]
+        lookat = -m_inv[2, :3]
+        up = m_inv[1, :3]
+       
+        #lookat /= torch.norm(lookat)
+
+        #print(pos)
+       # print(lookat)
+        #print(up)
+
+        model_matrix = torch.eye(3)#rot_matrix.T
+
+        yfov = camera_file["yfov"]
+        xfov = 2 * np.arctan(np.tan(yfov / 2) * aspect_ratio)
+        xfov = np.rad2deg(xfov)
+        yfov = np.rad2deg(yfov)
+
+
+        fromvec = pos
+        tovec = pos + lookat #torch.tensor([0.0, 0.0, 0.0])
+
+        print(f"from {fromvec} to {tovec}")
+        
+
         out = renderer.shade_images(net=net,
-                                    f=pos,
-                                    t=args.camera_lookat,
-                                    fov=args.camera_fov,
+                                    f=fromvec,
+                                    t=tovec,
+                                    fov=yfov,
                                     aa=not args.disable_aa,
-                                    mm=model_matrix)
+                                    mm=model_matrix,
+                                    u=up)
 
         data = out.float().numpy().exrdict()
 
@@ -181,6 +211,7 @@ if __name__ == '__main__':
                                         fov=args.camera_fov,
                                         aa=not args.disable_aa,
                                         mm=model_matrix)
+
 
             data = out.float().numpy().exrdict()
 
@@ -221,6 +252,9 @@ if __name__ == '__main__':
                                     fov=args.camera_fov,
                                     aa=not args.disable_aa,
                                     mm=model_matrix)
+
+
+        #print(f"from {args.camera_origin} to {args.camera_lookat}")
 
         data = out.float().numpy().exrdict()
 

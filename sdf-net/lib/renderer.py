@@ -93,11 +93,12 @@ class Renderer():
             fov          = 30.0, 
             camera_proj = 'persp',  
             device      = 'cuda', 
-            mm          = None
+            mm          = None,
+            u           = None
         ):
         # Generate the ray origins and directions, from camera parameters
         ray_o, ray_d = look_at(f, t, self.width, self.height, 
-                               fov=fov, mode=camera_proj, device=device)
+                               fov=fov, mode=camera_proj, device=device, u=u)
         # Rotate the camera into model space
         if mm is not None:
             mm = mm.to('cuda')
@@ -265,7 +266,7 @@ class Renderer():
 
         return d.cpu().numpy()
     
-    def shade_tensor(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, mm=None):
+    def shade_tensor(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, mm=None, u=None):
         """Non-differentiable shading for visualization.
         
         Args:
@@ -274,7 +275,7 @@ class Renderer():
             fov: field of view
             mm: model transformation matrix
         """
-        rb = self.render_lookat(net, f=f, t=t, fov=fov, mm=mm)
+        rb = self.render_lookat(net, f=f, t=t, fov=fov, mm=mm, u=u)
         # Shade the image
         if self.shading_mode == 'matcap':
             matcap = matcap_sampler(self.matcap_path)
@@ -307,7 +308,7 @@ class Renderer():
             rb.rgb[...,:3] *= rb.ao        
         return rb
 
-    def shade_images(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, aa=1, mm=None):
+    def shade_images(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, aa=1, mm=None, u=None):
         """
         Invokes the renderer and outputs images.
 
@@ -323,10 +324,10 @@ class Renderer():
         if aa > 1:
             rblst = [] 
             for _ in range(aa):
-                rblst.append(self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm))
+                rblst.append(self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u))
             rb = RenderBuffer.mean(*rblst)
         else:
-            rb = self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm)
+            rb = self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u)
         rb = rb.cpu().transpose()
         return rb
 
