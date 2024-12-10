@@ -90,9 +90,9 @@ wget https://raw.githubusercontent.com/nidorx/matcaps/master/1024/6E8C48_B8CDA7_
 python app/main.py \
     --net OctreeSDF \
     --num-lods 5 \
-    --dataset-path data/armadillo.obj \
+    --dataset-path path/to/model.obj \
     --epoch 250 \
-    --exp-name armadillo
+    --exp-name model_name
 ```
 
 This will populate `_results` with TensorBoard logs.
@@ -107,9 +107,12 @@ For example, if you set `--feature-dim 16` above, you need to set it here too.
 python app/sdf_renderer.py \
     --net OctreeSDF \
     --num-lods 5 \
-    --pretrained _results/models/armadillo.pth \
+    --pretrained _results/models/model_name.pth \
     --render-res 1280 720 \
-    --shading-mode matcap \
+    --shading-mode lambert \
+    --light-pos 0 100 1 0.05 \
+    --bg-color 0.5 0.5 0.5 \
+    --from-file path/to/camera/file.json
     --lod 4
 ```
 
