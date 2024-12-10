@@ -176,8 +176,8 @@ if __name__ == '__main__':
         model_matrix = torch.eye(3)#rot_matrix.T
 
         yfov = camera_file["yfov"]
-        xfov = 2 * np.arctan(np.tan(yfov / 2) * aspect_ratio)
-        xfov = np.rad2deg(xfov)
+        #xfov = 2 * np.arctan(np.tan(yfov / 2) * aspect_ratio)
+        #xfov = np.rad2deg(xfov)
         yfov = np.rad2deg(yfov)
 
 

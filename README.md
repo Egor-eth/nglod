@@ -44,32 +44,22 @@ Within `sdf-net`:
 
 ## Getting started
 
-### Python dependencies
-The easiest way to get started is to create a virtual Python 3.8 environment:
-```
-conda create -n nglod python=3.8
-conda activate nglod
-pip install --upgrade pip
-pip install -r ./infra/requirements.txt
-```
-
-The code also relies on [OpenEXR](https://www.openexr.com/), which requires a system library:
+The code relies on [OpenEXR](https://www.openexr.com/), which requires a system library:
 
 ```
-sudo apt install libopenexr-dev 
+sudo apt install libopenexr-dev pybind11-dev
 pip install pyexr
 ```
 
+### Python dependencies
+The easiest way to get started is to create a virtual Python 3.8 environment:
+```
+./prepare.sh
+source activate.sh
+```
+
+
 To see the full list of dependencies, see the [requirements](infra/requirements.txt).
-
-### Building CUDA extensions
-To build the corresponding CUDA kernels, run:
-```
-cd sdf-net/lib/extensions
-chmod +x build_ext.sh && ./build_ext.sh
-```
-
-The above instructions were tested on Ubuntu 18.04/20.04 with CUDA 10.2/11.1.
 
 ## Training & Rendering
 
