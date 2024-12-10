@@ -65,6 +65,11 @@ To see the full list of dependencies, see the [requirements](infra/requirements.
 
 **Note.** All following commands should be ran within the `sdf-net` directory.
 
+```
+cd sdf-net
+```
+
+
 ### Download sample data
 
 To download a cool armadillo:
