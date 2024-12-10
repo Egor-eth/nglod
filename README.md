@@ -112,7 +112,7 @@ python app/sdf_renderer.py \
     --shading-mode lambert \
     --light-pos 0 100 1 0.05 \
     --bg-color 0.5 0.5 0.5 \
-    --from-file path/to/camera/file.json
+    --from-file path/to/camera/file.json \
     --lod 4
 ```
 
