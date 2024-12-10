@@ -111,7 +111,8 @@ class Renderer():
     def render(self, net, ray_o, ray_d, lp=None):
         # Differentiable Renderer
 
-        lp = lp.to(ray_o.device)
+        if lp is not None:
+            lp = lp.to(ray_o.device)
 
         timer = PerfTimer(activate=self.perf)
         if self.perf:

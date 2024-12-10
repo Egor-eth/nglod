@@ -13,6 +13,6 @@ moviepy==1.0.3
 opencv-python
 plyfile
 polyscope
-tinyobjloader
+tinyobjloader==2.0.0rc13
 pyexr
 

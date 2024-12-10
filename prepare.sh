@@ -16,9 +16,8 @@ if [ -d "$VENV_DIR" ]; then
 fi
 
 pip install -r infra/requirements.txt &&
-touch "$VENV_DIR/installed"
-
-
-cd sdf-net/lib/extensions
-chmod +x build_ext.sh && ./build_ext.sh
-cd ../../..
+touch "$VENV_DIR/installed" && {
+    cd sdf-net/lib/extensions &&
+    chmod +x build_ext.sh && ./build_ext.sh
+    cd ../../..
+}
