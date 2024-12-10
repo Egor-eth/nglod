@@ -94,7 +94,8 @@ class Renderer():
             camera_proj = 'persp',  
             device      = 'cuda', 
             mm          = None,
-            u           = None
+            u           = None,
+            lp          = None
         ):
         # Generate the ray origins and directions, from camera parameters
         ray_o, ray_d = look_at(f, t, self.width, self.height, 
@@ -104,11 +105,14 @@ class Renderer():
             mm = mm.to('cuda')
             ray_o = torch.mm(ray_o, mm)
             ray_d = torch.mm(ray_d, mm)
-        return self.render(net, ray_o, ray_d)
+        return self.render(net, ray_o, ray_d, lp=lp)
 
 
-    def render(self, net, ray_o, ray_d):
+    def render(self, net, ray_o, ray_d, lp=None):
         # Differentiable Renderer
+
+        lp = lp.to(ray_o.device)
+
         timer = PerfTimer(activate=self.perf)
         if self.perf:
             _time = time.time()
@@ -172,10 +176,24 @@ class Renderer():
         ######################
         
         # This is executed if the tracer does not handle RGB
+        # :: Does not seem to be implemented
         if self.shading_mode == 'rb' and rb.rgb is None: 
             net(rb.x)
             #rb.rgb = net.render(rb.x, -ray_d, F.normalize(rb.normal))
             rb.rgb = net.render(rb.x, ray_d, F.normalize(rb.normal))[...,:3]
+
+
+        if self.shading_mode == "lambert" and lp is not None:
+            light_color = torch.FloatTensor([0.5, 0.5, 0.5]).to(ray_o.device)
+
+            ray_lp = ray_o + ray_d * rb.depth - lp[None, :3]
+            print(ray_o.shape)
+            print(ray_lp.shape)
+
+            ilightcolor = lp[3] * light_color
+
+
+            rb.rgb = torch.clamp(ilightcolor[None, None, :] * torch.clamp((-ray_lp * rb.normal).sum(axis=-1), 0)[..., None] / torch.pi, 0, 1)
 
         ######################
         # Ambient Occlusion
@@ -266,7 +284,7 @@ class Renderer():
 
         return d.cpu().numpy()
     
-    def shade_tensor(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, mm=None, u=None):
+    def shade_tensor(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, mm=None, u=None, bg=[1, 1, 1], lp=None):
         """Non-differentiable shading for visualization.
         
         Args:
@@ -275,7 +293,8 @@ class Renderer():
             fov: field of view
             mm: model transformation matrix
         """
-        rb = self.render_lookat(net, f=f, t=t, fov=fov, mm=mm, u=u)
+
+        rb = self.render_lookat(net, f=f, t=t, fov=fov, mm=mm, u=u, lp=lp)
         # Shade the image
         if self.shading_mode == 'matcap':
             matcap = matcap_sampler(self.matcap_path)
@@ -292,11 +311,15 @@ class Renderer():
         elif self.shading_mode == 'rb':
             assert rb.rgb is not None and "No rgb in buffer; change shading-mode"
             pass
-        else:
+        elif self.shading_mode != 'lambert':
             raise NotImplementedError
         # Use segmentation
         rb.normal[~rb.hit[...,0]] = 1.0
-        rb.rgb[~rb.hit[...,0]] = 1.0
+
+        background_color = torch.FloatTensor(bg).to(rb.rgb.device)
+
+        rb.rgb[~rb.hit[...,0]] = background_color
+
 
         # Add secondary effects
         if self.shadow:
@@ -308,7 +331,7 @@ class Renderer():
             rb.rgb[...,:3] *= rb.ao        
         return rb
 
-    def shade_images(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, aa=1, mm=None, u=None):
+    def shade_images(self, net, f=[0,0,1], t=[0,0,0], fov=30.0, aa=1, mm=None, u=None, bg=[1, 1, 1], lp=None):
         """
         Invokes the renderer and outputs images.
 
@@ -324,10 +347,10 @@ class Renderer():
         if aa > 1:
             rblst = [] 
             for _ in range(aa):
-                rblst.append(self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u))
+                rblst.append(self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u, lp=lp))
             rb = RenderBuffer.mean(*rblst)
         else:
-            rb = self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u)
+            rb = self.shade_tensor(net, f=f, t=t, fov=fov, mm=mm, u=u, bg=bg, lp=lp)
         rb = rb.cpu().transpose()
         return rb
 

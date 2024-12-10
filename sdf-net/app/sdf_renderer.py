@@ -82,6 +82,10 @@ if __name__ == '__main__':
                            help='Depth of 2D slice.')
     app_group.add_argument('--from-file', type=str, default=None,
                            help='Camera settings file.')
+    app_group.add_argument('--light-pos', type=float, nargs=4, default=[1, 2, 1, 10],
+                           help='Point light source origin')
+    app_group.add_argument('--bg-color', type=float, nargs=3, default=[1, 1, 1],
+                           help='Background color')
     args = parser.parse_args()
 
     # Pick device
@@ -148,15 +152,15 @@ if __name__ == '__main__':
         matrix = torch.tensor(list(map(float, camera_file["matrix"]))).reshape(4, 4)
         
         aspect_ratio = args.render_res[0] / args.render_res[1]
-        print(aspect_ratio)
+        #print(aspect_ratio)
         #matrix[:3, 0] /= torch.norm(matrix[:3, 0])
         #matrix[:3, 1] /= torch.norm(matrix[:3, 1])
         #matrix[:3, 2] /= torch.norm(matrix[:3, 2])
 
         m_inv = torch.linalg.inv(matrix)
 
-        print(matrix)
-        print(m_inv)
+        #print(matrix)
+        #print(m_inv)
 
         rot_matrix = m_inv[:3, :3]
         pos = m_inv[3, :3]
@@ -180,8 +184,10 @@ if __name__ == '__main__':
         fromvec = pos
         tovec = pos + lookat #torch.tensor([0.0, 0.0, 0.0])
 
-        print(f"from {fromvec} to {tovec}")
+        #print(f"from {fromvec} to {tovec}")
         
+        lp = torch.FloatTensor(args.light_pos)
+        lp[:3] = rot_matrix @ lp[:3]
 
         out = renderer.shade_images(net=net,
                                     f=fromvec,
@@ -189,7 +195,9 @@ if __name__ == '__main__':
                                     fov=yfov,
                                     aa=not args.disable_aa,
                                     mm=model_matrix,
-                                    u=up)
+                                    u=up,
+                                    bg=args.bg_color,
+                                    lp=torch.FloatTensor(args.light_pos))
 
         data = out.float().numpy().exrdict()
 
@@ -210,6 +218,7 @@ if __name__ == '__main__':
                                         t=args.camera_lookat,
                                         fov=args.camera_fov,
                                         aa=not args.disable_aa,
+                                        bg=args.bg_color,
                                         mm=model_matrix)
 
 
@@ -233,6 +242,7 @@ if __name__ == '__main__':
                                         t=args.camera_lookat,
                                         fov=args.camera_fov,
                                         aa=not args.disable_aa,
+                                        bg=args.bg_color,
                                         mm=model_matrix)
 
             data = out.float().numpy().exrdict()
@@ -251,6 +261,7 @@ if __name__ == '__main__':
                                     t=args.camera_lookat,
                                     fov=args.camera_fov,
                                     aa=not args.disable_aa,
+                                    bg=args.bg_color,
                                     mm=model_matrix)
 
 
