@@ -191,7 +191,7 @@ class Renderer():
             print(ray_o.shape)
             print(ray_lp.shape)
 
-            ilightcolor = lp[3] * light_color
+            ilightcolor = (lp[3] * light_color)[None, :] / (ray_lp ** 2).sum(axis=-1)[..., None]
 
 
             rb.rgb = torch.clamp(ilightcolor[None, None, :] * torch.clamp((-ray_lp * rb.normal).sum(axis=-1), 0)[..., None] / torch.pi, 0, 1)

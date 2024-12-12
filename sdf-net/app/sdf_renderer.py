@@ -82,7 +82,7 @@ if __name__ == '__main__':
                            help='Depth of 2D slice.')
     app_group.add_argument('--from-file', type=str, default=None,
                            help='Camera settings file.')
-    app_group.add_argument('--light-pos', type=float, nargs=4, default=[1, 2, 1, 10],
+    app_group.add_argument('--light', type=float, nargs=4, default=[1, -1, 1, 10],
                            help='Point light source origin')
     app_group.add_argument('--bg-color', type=float, nargs=3, default=[1, 1, 1],
                            help='Background color')
@@ -186,8 +186,7 @@ if __name__ == '__main__':
 
         #print(f"from {fromvec} to {tovec}")
         
-        lp = torch.FloatTensor(args.light_pos)
-        lp[:3] = rot_matrix @ lp[:3]
+
 
         out = renderer.shade_images(net=net,
                                     f=fromvec,
@@ -197,7 +196,7 @@ if __name__ == '__main__':
                                     mm=model_matrix,
                                     u=up,
                                     bg=args.bg_color,
-                                    lp=torch.FloatTensor(args.light_pos))
+                                    lp=torch.FloatTensor(args.light))
 
         data = out.float().numpy().exrdict()
 
