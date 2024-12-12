@@ -82,6 +82,8 @@ if __name__ == '__main__':
                            help='Depth of 2D slice.')
     app_group.add_argument('--from-file', type=str, default=None,
                            help='Camera settings file.')
+    app_group.add_argument('--camera', type=float, nargs=7, default=None,
+                           help='Camera settings.')
     app_group.add_argument('--light', type=float, nargs=4, default=[1, -1, 1, 10],
                            help='Point light source origin')
     app_group.add_argument('--bg-color', type=float, nargs=3, default=[1, 1, 1],
@@ -108,6 +110,11 @@ if __name__ == '__main__':
     net.eval()
 
     print("Total number of parameters: {}".format(sum(p.numel() for p in net.parameters())))
+
+    param_size = sum(p.nelement() * p.element_size() for p in net.parameters())
+    buffer_size = sum(b.nelement() * b.element_size() for b in net.buffers())
+
+    print(f"Model uncompressed size: {(param_size + buffer_size) / 1024 ** 2 : .3f} MB")
 
     if args.export is not None:
         net = SOL_NGLOD(net)
@@ -142,51 +149,45 @@ if __name__ == '__main__':
     else:
         model_matrix = torch.eye(3)
 
-    if args.from_file is not None:
+    if args.from_file is not None or args.camera is not None:
 
-        with open(args.from_file) as f:
-            camera_file = json.load(f)["camera"]
+
+        if args.from_file is not None:
+            with open(args.from_file) as f:
+                camera_file = json.load(f)["camera"]
+                
+
+
+            matrix = torch.tensor(list(map(float, camera_file["matrix"]))).reshape(4, 4)
             
+            aspect_ratio = args.render_res[0] / args.render_res[1]
+
+            m_inv = torch.linalg.inv(matrix)
+
+            rot_matrix = m_inv[:3, :3]
+            pos = m_inv[3, :3]
+            lookat = -m_inv[2, :3]
+            up = m_inv[1, :3]
+
+            #rot_matrix.T
+
+            yfov = camera_file["yfov"]
+            yfov = np.rad2deg(yfov)
 
 
-        matrix = torch.tensor(list(map(float, camera_file["matrix"]))).reshape(4, 4)
-        
-        aspect_ratio = args.render_res[0] / args.render_res[1]
-        #print(aspect_ratio)
-        #matrix[:3, 0] /= torch.norm(matrix[:3, 0])
-        #matrix[:3, 1] /= torch.norm(matrix[:3, 1])
-        #matrix[:3, 2] /= torch.norm(matrix[:3, 2])
+            fromvec = pos
+            tovec = pos + lookat #torch.tensor([0.0, 0.0, 0.0])
 
-        m_inv = torch.linalg.inv(matrix)
+        else:
+            fromvec = torch.FloatTensor(args.camera[:3])
+            lookat = torch.FloatTensor(args.camera[3:6])
+            tovec = fromvec + lookat
+            up = torch.FloatTensor([0, 1, 0])
+            yfov = args.camera[6]
 
-        #print(matrix)
-        #print(m_inv)
+        model_matrix = torch.eye(3)
 
-        rot_matrix = m_inv[:3, :3]
-        pos = m_inv[3, :3]
-        lookat = -m_inv[2, :3]
-        up = m_inv[1, :3]
-       
-        #lookat /= torch.norm(lookat)
-
-        #print(pos)
-       # print(lookat)
-        #print(up)
-
-        model_matrix = torch.eye(3)#rot_matrix.T
-
-        yfov = camera_file["yfov"]
-        #xfov = 2 * np.arctan(np.tan(yfov / 2) * aspect_ratio)
-        #xfov = np.rad2deg(xfov)
-        yfov = np.rad2deg(yfov)
-
-
-        fromvec = pos
-        tovec = pos + lookat #torch.tensor([0.0, 0.0, 0.0])
-
-        #print(f"from {fromvec} to {tovec}")
-        
-
+        print(f"From {fromvec} with direction {lookat} with fov {yfov}")
 
         out = renderer.shade_images(net=net,
                                     f=fromvec,

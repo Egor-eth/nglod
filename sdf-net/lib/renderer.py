@@ -188,8 +188,8 @@ class Renderer():
             light_color = torch.FloatTensor([0.5, 0.5, 0.5]).to(ray_o.device)
 
             ray_lp = ray_o + ray_d * rb.depth - lp[None, :3]
-            print(ray_o.shape)
-            print(ray_lp.shape)
+            #print(ray_o.shape)
+            #print(ray_lp.shape)
 
             ilightcolor = (lp[3] * light_color)[None, :] / (ray_lp ** 2).sum(axis=-1)[..., None]
 
