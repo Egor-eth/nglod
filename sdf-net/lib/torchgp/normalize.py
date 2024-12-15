@@ -25,6 +25,9 @@ def normalize(
     V : torch.Tensor,
     F : torch.Tensor):
 
+    #do not normalize mesh, it was already normalized by LiteRT
+    return V,F
+
     # Normalize mesh
     V_max, _ = torch.max(V, dim=0)
     V_min, _ = torch.min(V, dim=0)

@@ -286,7 +286,7 @@ if __name__ == '__main__':
         Image.fromarray(img_out.normal).save('{}/{}_normal.png'.format(ins_dir, name), mode='RGB')
         Image.fromarray(img_out.hit).save('{}/{}_hit.png'.format(ins_dir, name), mode='L')
 
-    img1 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/mesh_cpu.png')
-    img2 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/000000.png')
-    psnr = cv2.PSNR(img1, img2)
-    print("psnr=",psnr)
+    # img1 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/mesh_cpu.png')
+    # img2 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/000000.png')
+    # psnr = cv2.PSNR(img1, img2)
+    # print("psnr=",psnr)
