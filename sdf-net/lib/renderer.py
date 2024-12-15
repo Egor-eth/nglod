@@ -235,7 +235,7 @@ class Renderer():
         rb = rb.reshape(self.width, self.height, -1) 
 
         if self.perf:
-            print("Time Elapsed: {:.2f} ms".format(1000*(time.time() - _time)))
+            print("time:r = {:.2f}".format(1000*(time.time() - _time)))
         
         return rb
     

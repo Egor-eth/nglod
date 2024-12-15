@@ -6,3 +6,6 @@ compile_commands.json
 
 sdf-net/data
 .venv
+sdf-net/render_log.txt
+sdf-net/build_log.txt
+sdf-net/tmp_model.pth

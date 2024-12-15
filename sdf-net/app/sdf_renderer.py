@@ -110,12 +110,13 @@ if __name__ == '__main__':
     net.to(device)
     net.eval()
 
-    print("Total number of parameters: {}".format(sum(p.numel() for p in net.parameters())))
+    print("{")
+    print("params:i = {}".format(sum(p.numel() for p in net.parameters())))
 
     param_size = sum(p.nelement() * p.element_size() for p in net.parameters())
     buffer_size = sum(b.nelement() * b.element_size() for b in net.buffers())
 
-    print(f"Model uncompressed size: {(param_size + buffer_size) / 1024 ** 2 : .3f} MB")
+    print(f"size:r = {(param_size + buffer_size) / 1024 ** 2 : .3f}")
 
     if args.export is not None:
         net = SOL_NGLOD(net)
@@ -188,7 +189,7 @@ if __name__ == '__main__':
 
         model_matrix = torch.eye(3)
 
-        print(f"From {fromvec} with direction {lookat} with fov {yfov}")
+        #print(f"From {fromvec} with direction {lookat} with fov {yfov}")
 
         out = renderer.shade_images(net=net,
                                     f=fromvec,
@@ -286,6 +287,7 @@ if __name__ == '__main__':
         Image.fromarray(img_out.normal).save('{}/{}_normal.png'.format(ins_dir, name), mode='RGB')
         Image.fromarray(img_out.hit).save('{}/{}_hit.png'.format(ins_dir, name), mode='L')
 
+    print("}")
     # img1 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/mesh_cpu.png')
     # img2 = cv2.imread('_results/render_app/imgs/n_bunny/rgb/000000.png')
     # psnr = cv2.PSNR(img1, img2)
