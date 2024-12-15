@@ -1,0 +1,1 @@
+python app/main.py --net OctreeSDF --num-lods 3 --dataset-path data/normalized_bunny.obj --epoch 100 --exp-name n_bunny

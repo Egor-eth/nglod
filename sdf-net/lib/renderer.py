@@ -185,17 +185,20 @@ class Renderer():
 
 
         if self.shading_mode == "lambert" and lp is not None:
-            light_color = torch.FloatTensor([0.5, 0.5, 0.5]).to(ray_o.device)
+            light_color = torch.FloatTensor([1,1,1]).to(ray_o.device)
 
-            ray_lp = ray_o + ray_d * rb.depth - lp[None, :3]
+            #ray_lp = ray_o + ray_d * rb.depth - lp[None, :3]
+            ray_dir = lp[None, :3] / torch.norm(lp[None, :3], dim=-1, keepdim=True)
             #print(ray_o.shape)
             #print(ray_lp.shape)
 
-            attenuation = torch.clamp(10 / (ray_lp ** 2).sum(axis=-1), 0, 1)
-            ilightcolor = (lp[3] * light_color)[None, :] * attenuation[..., None]
+            #attenuation = torch.clamp(10 / (ray_lp ** 2).sum(axis=-1), 0, 1)
+            #ilightcolor = (lp[3] * light_color)[None, :] * attenuation[..., None]
 
-
-            rb.rgb = torch.clamp(ilightcolor[None, None, :] * torch.clamp((-ray_lp * rb.normal).sum(axis=-1), 0)[..., None] / torch.pi, 0, 1)
+            ilightcolor = (lp[3] * light_color)[None, :]
+            ilightcolor2 = ilightcolor[None, None, :]
+            ambient_color = torch.FloatTensor([0.25]).expand_as(ilightcolor2).to(ray_o.device)
+            rb.rgb = torch.clamp(ilightcolor2 * torch.clamp((ray_dir * rb.normal).sum(axis=-1), 0)[..., None], 0, 1000) + ambient_color
 
         ######################
         # Ambient Occlusion
@@ -232,7 +235,7 @@ class Renderer():
         rb = rb.reshape(self.width, self.height, -1) 
 
         if self.perf:
-            print("Time Elapsed:{:.4f}".format(time.time() - _time))
+            print("Time Elapsed: {:.2f} ms".format(1000*(time.time() - _time)))
         
         return rb
     

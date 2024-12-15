@@ -1,0 +1,12 @@
+python app/sdf_renderer.py     \
+--net OctreeSDF     \
+--num-lods 3     \
+--pretrained _results/models/n_bunny.pth     \
+--render-res 1000 1000     \
+--shading-mode lambert     \
+--bg-color 0.0 0.0 0.0     \
+--camera 0 0 2.384  0 0 -1 60 \
+--light  1 1 1   0.6667 \
+--disable-aa \
+--perf \
+--lod 2
