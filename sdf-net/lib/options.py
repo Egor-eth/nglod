@@ -156,7 +156,7 @@ def parse_options(return_parser=False):
                              help='Batch size for the training.')
     train_group.add_argument('--only-last', action='store_true', 
                              help='Train only last LOD.')
-    train_group.add_argument('--resample-every', type=int, default=10,
+    train_group.add_argument('--resample-every', type=int, default=35,
                              help='Resample every N epochs')
     train_group.add_argument('--model-path', type=str, default='_results/models', 
                              help='Path to save the trained models.')
